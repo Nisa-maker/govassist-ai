@@ -3,6 +3,8 @@
 <head>
     <title>GovAssist AI Dashboard</title>
     <style>
+
+        
         body {
             font-family: Arial;
             background: #0f172a;
@@ -10,16 +12,34 @@
             padding: 20px;
         }
 
+
         h1 {
             color: #38bdf8;
         }
 
+        
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
             background: #1e293b;
         }
+
+        th, td {
+    border: 1px solid #2a3b55;
+    padding: 10px;
+}
+th {
+    background-color: #0b1a2a;
+}
+
+tr:nth-child(even) {
+    background-color: #16263a;
+}
+
+tr:hover {
+    background-color: #1f3550;
+}
 
         th, td {
             padding: 10px;
@@ -84,7 +104,54 @@ async function loadData() {
 }
 
 loadData();
+
+function applyFilter() {
+    const minScore = document.getElementById("minScore").value;
+    const maxIncome = document.getElementById("maxIncome").value;
+    const name = document.getElementById("searchName").value.toLowerCase();
+
+    const rows = document.querySelectorAll("tbody tr");
+
+    rows.forEach(row => {
+        const score = parseInt(row.children[4].innerText);
+        const income = parseInt(row.children[2].innerText);
+        const citizenName = row.children[1].innerText.toLowerCase();
+
+        let show = true;
+
+        if (minScore && score < minScore) show = false;
+        if (maxIncome && income > maxIncome) show = false;
+        if (name && !citizenName.includes(name)) show = false;
+
+        row.style.display = show ? "" : "none";
+    });
+}
+
+function applyFilter() {
+    const minScore = document.getElementById("minScore").value;
+    const maxIncome = document.getElementById("maxIncome").value;
+    const name = document.getElementById("searchName").value.toLowerCase();
+
+    const rows = document.querySelectorAll("tbody tr");
+
+    rows.forEach(row => {
+        const score = parseInt(row.children[4].innerText);
+        const income = parseInt(row.children[2].innerText);
+        const citizenName = row.children[1].innerText.toLowerCase();
+
+        let show = true;
+
+        if (minScore && score < minScore) show = false;
+        if (maxIncome && income > maxIncome) show = false;
+        if (name && !citizenName.includes(name)) show = false;
+
+        row.style.display = show ? "" : "none";
+    });
+}
+
+
 </script>
+
 
 </body>
 </html>

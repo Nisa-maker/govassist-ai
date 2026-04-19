@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
+from fastapi.middleware.cors import CORSMiddleware
 import random
 
 # =========================
@@ -27,10 +28,20 @@ from backend.services.employment import get_employment
 from backend.services.economy import get_economy
 from backend.services.social import get_social_assistance
 
+
 # =========================
 # APP INIT
 # =========================
 app = FastAPI(title="GovAssist AI - Integrated Government System")
+
+# CORS (WAJIB biar frontend jalan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # =========================
@@ -42,35 +53,23 @@ def home():
 
 
 # =========================
-# FULL SYSTEM ENDPOINT
+# FULL SYSTEM (DETAIL)
 # =========================
 @app.get("/citizen/{citizen_id}")
 def full_system(citizen_id: str):
 
     try:
-        # -------------------------
-        # CORE DATA
-        # -------------------------
         citizen = get_citizen_data(citizen_id)
-
-        # -------------------------
-        # SERVICES
-        # -------------------------
         education = get_education(citizen_id)
         health = get_health(citizen_id)
         employment = get_employment(citizen_id)
 
-        # -------------------------
-        # DERIVED
-        # -------------------------
+        # economy pakai income dari employment
         economy = get_economy(citizen_id, employment["income"])
 
         dependents = random.randint(0, 5)
         house_condition = random.randint(1, 3)
 
-        # -------------------------
-        # ML (SAFE)
-        # -------------------------
         try:
             model = get_model()
 
@@ -89,9 +88,6 @@ def full_system(citizen_id: str):
                 "detail": str(e)
             }
 
-        # -------------------------
-        # RESPONSE
-        # -------------------------
         return {
             "citizen": citizen,
             "education": education,
@@ -108,13 +104,20 @@ def full_system(citizen_id: str):
             "error": "SYSTEM FAILED",
             "detail": str(e)
         }
-    
+
+
+# =========================
+# RANKING + FILTER 🔥
+# =========================
 @app.get("/citizens/priority")
-def rank_citizens():
+def rank_citizens(
+    min_score: int = Query(0),
+    city: str = Query(None)
+):
 
     results = []
 
-    for i in range(1, 51):  # ambil 50 warga
+    for i in range(1, 101):
         citizen_id = f"ID{i:03d}"
 
         try:
@@ -122,6 +125,8 @@ def rank_citizens():
             education = get_education(citizen_id)
             health = get_health(citizen_id)
             employment = get_employment(citizen_id)
+
+            # FIX: economy butuh income
             economy = get_economy(citizen_id, employment["income"])
 
             dependents = random.randint(0, 5)
@@ -139,17 +144,23 @@ def rank_citizens():
             )
 
             # =========================
-            # PRIORITY SCORE
+            # FILTER CITY
+            # =========================
+            if city and citizen.get("address") != city:
+                continue
+
+            # =========================
+            # SCORE LOGIC
             # =========================
             score = 0
 
-            if social["eligible"] == 1:
+            if social.get("eligible") == 1:
                 score += 3
 
-            if social["health_priority"] == 1:
+            if social.get("health_priority") == 1:
                 score += 2
 
-            score += (5 - employment["income"])  # makin kecil income makin tinggi score
+            score += (5 - employment["income"])
             score += dependents
 
             results.append({
@@ -157,28 +168,23 @@ def rank_citizens():
                 "name": citizen.get("name"),
                 "income": employment["income"],
                 "dependents": dependents,
-                "health_priority": social["health_priority"],
-                "eligible": social["eligible"],
                 "score": score,
-                "reasons": social["reasons"]
+                "eligible": social.get("eligible", 0),
+                "health_priority": social.get("health_priority", 0),
+                "reasons": social.get("reasons", [])
             })
 
         except:
             continue
 
     # =========================
-    # SORT DESC 
+    # SORT
     # =========================
     results = sorted(results, key=lambda x: x["score"], reverse=True)
 
-    return results[:10]  # top 10
+    # =========================
+    # FILTER MIN SCORE
+    # =========================
+    results = [r for r in results if r["score"] >= min_score]
 
-from fastapi.middleware.cors import CORSMiddleware
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    return results[:20]
