@@ -1,28 +1,19 @@
 import random
 
-def get_economy(citizen_id):
+def get_economy(citizen_id: str, income: int):
     """
-    Generate economic data for a citizen
+    Generate economic profile based on employment income
     """
 
-    # simulate monthly income (scaled 1–10 for ML)
-    income = random.randint(1, 10)
-
-    # simulate employment type
-    employment_type = random.choice([
-        "unemployed",
-        "informal",
-        "formal",
-        "self-employed"
-    ])
-
-    # simulate asset ownership (simple proxy)
-    has_vehicle = random.choice([True, False])
-    has_house = random.choice([True, False])
+    # classify income
+    if income < 3:
+        income_level = "low"
+    elif income < 7:
+        income_level = "middle"
+    else:
+        income_level = "high"
 
     return {
         "income": income,
-        "employment_type": employment_type,
-        "has_vehicle": has_vehicle,
-        "has_house": has_house
+        "income_level": income_level
     }
