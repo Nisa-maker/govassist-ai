@@ -82,49 +82,51 @@ tr:hover {
 
 <script>
 async function loadData() {
-    const res = await fetch("http://127.0.0.1:8000/citizens/priority");
+    const res = await fetch("http://127.0.0.1:8000/rank?min_score=10");
     const data = await res.json();
 
-    const tbody = document.querySelector("#table tbody");
-    tbody.innerHTML = "";
+    const table = document.getElementById("tableBody");
+    table.innerHTML = "";
 
     data.forEach(c => {
-        const row = `
+        table.innerHTML += `
             <tr>
                 <td>${c.citizen_id}</td>
                 <td>${c.name}</td>
                 <td>${c.income}</td>
                 <td>${c.dependents}</td>
-                <td class="high">${c.score}</td>
+                <td style="color:#ff6b6b">${c.score}</td>
                 <td>${c.reasons.join(", ")}</td>
             </tr>
         `;
-        tbody.innerHTML += row;
     });
 }
 
 loadData();
 
 function applyFilter() {
-    const minScore = document.getElementById("minScore").value;
-    const maxIncome = document.getElementById("maxIncome").value;
-    const name = document.getElementById("searchName").value.toLowerCase();
+    const minScore = document.getElementById("minScore").value || 0;
+    const city = document.getElementById("city").value || "";
 
-    const rows = document.querySelectorAll("tbody tr");
+    fetch(`http://127.0.0.1:8000/rank?min_score=${minScore}&city=${city}`)
+        .then(res => res.json())
+        .then(data => {
+            const table = document.getElementById("tableBody");
+            table.innerHTML = "";
 
-    rows.forEach(row => {
-        const score = parseInt(row.children[4].innerText);
-        const income = parseInt(row.children[2].innerText);
-        const citizenName = row.children[1].innerText.toLowerCase();
-
-        let show = true;
-
-        if (minScore && score < minScore) show = false;
-        if (maxIncome && income > maxIncome) show = false;
-        if (name && !citizenName.includes(name)) show = false;
-
-        row.style.display = show ? "" : "none";
-    });
+            data.forEach(c => {
+                table.innerHTML += `
+                    <tr>
+                        <td>${c.citizen_id}</td>
+                        <td>${c.name}</td>
+                        <td>${c.income}</td>
+                        <td>${c.dependents}</td>
+                        <td style="color:#ff6b6b">${c.score}</td>
+                        <td>${c.reasons.join(", ")}</td>
+                    </tr>
+                `;
+            });
+        });
 }
 
 function applyFilter() {
@@ -149,6 +151,11 @@ function applyFilter() {
     });
 }
 
+<div>
+    <input type="number" id="minScore" placeholder="Min Score" />
+    <input type="text" id="city" placeholder="City" />
+    <button onclick="applyFilter()">Filter</button>
+</div>
 
 </script>
 

@@ -3,6 +3,22 @@ from fastapi.middleware.cors import CORSMiddleware
 import random
 
 # =========================
+# APP INIT
+# =========================
+app = FastAPI(title="GovAssist AI - Integrated Government System")
+
+# =========================
+# CORS
+# =========================
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# =========================
 # SAFE MODEL LOADING (LAZY)
 # =========================
 model = None
@@ -17,7 +33,6 @@ def get_model():
         model = joblib.load(model_path)
     return model
 
-
 # =========================
 # IMPORT SERVICES
 # =========================
@@ -28,22 +43,6 @@ from backend.services.employment import get_employment
 from backend.services.economy import get_economy
 from backend.services.social import get_social_assistance
 
-
-# =========================
-# APP INIT
-# =========================
-app = FastAPI(title="GovAssist AI - Integrated Government System")
-
-# CORS (WAJIB biar frontend jalan)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
 # =========================
 # HOME
 # =========================
@@ -51,9 +50,8 @@ app.add_middleware(
 def home():
     return {"status": "OK 🚀"}
 
-
 # =========================
-# FULL SYSTEM (DETAIL)
+# DETAIL CITIZEN
 # =========================
 @app.get("/citizen/{citizen_id}")
 def full_system(citizen_id: str):
@@ -64,7 +62,6 @@ def full_system(citizen_id: str):
         health = get_health(citizen_id)
         employment = get_employment(citizen_id)
 
-        # economy pakai income dari employment
         economy = get_economy(citizen_id, employment["income"])
 
         dependents = random.randint(0, 5)
@@ -105,15 +102,10 @@ def full_system(citizen_id: str):
             "detail": str(e)
         }
 
-
 # =========================
-# RANKING + FILTER 🔥
+# RANKING LOGIC
 # =========================
-@app.get("/citizens/priority")
-def rank_citizens(
-    min_score: int = Query(0),
-    city: str = Query(None)
-):
+def rank_citizens(min_score=0, city=None):
 
     results = []
 
@@ -126,7 +118,6 @@ def rank_citizens(
             health = get_health(citizen_id)
             employment = get_employment(citizen_id)
 
-            # FIX: economy butuh income
             economy = get_economy(citizen_id, employment["income"])
 
             dependents = random.randint(0, 5)
@@ -143,14 +134,12 @@ def rank_citizens(
                 model=model
             )
 
-            # =========================
             # FILTER CITY
-            # =========================
             if city and citizen.get("address") != city:
                 continue
 
             # =========================
-            # SCORE LOGIC
+            # SCORING SYSTEM 🔥
             # =========================
             score = 0
 
@@ -160,8 +149,8 @@ def rank_citizens(
             if social.get("health_priority") == 1:
                 score += 2
 
-            score += (5 - employment["income"])
-            score += dependents
+            score += (5 - employment["income"])  # makin miskin makin tinggi
+            score += dependents  # makin banyak tanggungan makin tinggi
 
             results.append({
                 "citizen_id": citizen_id,
@@ -177,20 +166,20 @@ def rank_citizens(
         except:
             continue
 
-    # =========================
-    # SORT
-    # =========================
+    # SORTING
     results = sorted(results, key=lambda x: x["score"], reverse=True)
 
-    # =========================
     # FILTER MIN SCORE
-    # =========================
     results = [r for r in results if r["score"] >= min_score]
 
     return results[:20]
 
-app = FastAPI()
-
+# =========================
+# RANK ENDPOINT
+# =========================
 @app.get("/rank")
-def get_rank(min_score: int = 0):
-    return rank_citizens(min_score)
+def get_rank(
+    min_score: int = Query(0),
+    city: str = Query(None)
+):
+    return rank_citizens(min_score, city)
