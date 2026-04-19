@@ -1,6 +1,6 @@
 import random
 
-def get_ekonomi(citizen_id):
+def get_economy(citizen_id):
     """
     Generate economic data for a citizen
     """
