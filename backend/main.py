@@ -1,150 +1,67 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
+import random
 
-from fastapi import FastAPI
-from pydantic import BaseModel
-import joblib
-
-
-
-app = FastAPI(title="GovAssist AI")
-
-model = joblib.load("models/model.pkl")
-
-education_map = {
-    "no_school": 0,
-    "incomplete_elementary": 1,
-    "elementary_school": 2,
-    "junior_high_school": 3,
-    "senior_high_school": 4,
-    "university": 5
-}
-
-class Citizen(BaseModel):
-    income: float
-    dependents: int
-    house_condition: int
-    education_level: str
-
-
-@app.post("/predict")
-def predict(data: Citizen):
-    edu = education_map.get(data.education_level, 2)
-
-    X = [[
-        data.income,
-        data.dependents,
-        data.house_condition,
-        edu
-    ]]
-
-    prediction = model.predict(X)[0]
-
-    return {
-        "eligible": int(prediction),
-        "education_used": data.education_level
-    }
-
-
-import joblib
-
-model = joblib.load("models/model.pkl")
-
-# import unified citizen service
+# import all services
 from backend.services.citizen import get_citizen_data
+from backend.services.education import get_education
+from backend.services.health import get_health
+from backend.services.employment import get_employment
+from backend.services.ekonomi import get_economy
+from backend.services.social import get_social_assistance
 
-app = FastAPI(title="GovAssist AI - Integrated Government System")
+app = FastAPI(title="GovAssist AI - Integrated System")
 
-# =========================
-# HOME
-# =========================
+
 @app.get("/")
 def home():
-    return {"message": "GovAssist AI is running 🚀"}
+    return {"message": "GovAssist AI running 🚀"}
 
 
-# =========================
-# REQUEST MODELS
-# =========================
+@app.get("/citizen/{citizen_id}")
+def get_full_profile(citizen_id: str):
 
-# for citizen-based system (e-Devlet style)
-class CitizenRequest(BaseModel):
-    citizen_id: str
+    # =========================
+    # CORE DATA
+    # =========================
+    citizen = get_citizen_data(citizen_id)
 
+    # =========================
+    # SERVICES
+    # =========================
+    education = get_education(citizen_id)
+    health = get_health(citizen_id)
+    employment = get_employment(citizen_id)
 
-# for manual prediction (optional)
-class PredictionInput(BaseModel):
-    income: float
-    dependents: int
-    house_condition: int
+    # =========================
+    # DERIVED DATA
+    # =========================
+    economy = get_economy(citizen_id, employment["income"])
 
+    # dependents & house (sementara random)
+    dependents = random.randint(0, 5)
+    house_condition = random.randint(1, 3)
 
-# =========================
-# CITIZEN DATA (CORE SYSTEM)
-# =========================
-@app.post("/citizen")
-def get_citizen(request: CitizenRequest):
-    """
-    Retrieve integrated citizen data across multiple sectors
-    (population, education, health, employment, economy, social)
-    """
-    return get_citizen_data(request.citizen_id)
-
-
-# =========================
-# AI DECISION (AUTO - BY ID)
-# =========================
-@app.post("/predict/citizen")
-def predict_by_citizen(request: CitizenRequest):
-    """
-    Predict eligibility using integrated citizen data
-    (no manual input needed)
-    """
-    data = get_citizen_data(request.citizen_id)
-
-    # extract features 
-    income = data.get("income", 0)
-    dependents = data.get("dependents", 1)
-    house_condition = data.get("house_condition", 2)
-
-    # simple scoring logic 
-    score = income * 0.3 + dependents * 0.5 + house_condition * 0.2
-
-    eligible = 1 if score < 5 else 0
-
-    return {
-        "citizen_id": request.citizen_id,
-        "eligible": eligible,
-        "score": score,
-        "data_used": {
-            "income": income,
-            "dependents": dependents,
-            "house_condition": house_condition
-        },
-        "note": "Decision based on integrated citizen data"
-    }
-
-
-# =========================
-# AI DECISION (MANUAL INPUT)
-# =========================
-@app.post("/predict/manual")
-def predict_manual(data: PredictionInput):
-    """
-    Predict eligibility using manual input
-    (for testing / comparison)
-    """
-    score = (
-        data.income * 0.3 +
-        data.dependents * 0.5 +
-        data.house_condition * 0.2
+    # =========================
+    # AI DECISION (SOCIAL)
+    # =========================
+    social = get_social_assistance(
+        income=employment["income"],
+        dependents=dependents,
+        house_condition=house_condition,
+        education_level=education["education_level"],
+        health=health
     )
 
-    eligible = 1 if score < 5 else 0
-
+    # =========================
+    # FINAL RESPONSE
+    # =========================
     return {
-        "eligible": eligible,
-        "score": score,
-        "note": "Manual input prediction"
+        "citizen": citizen,
+        "education": education,
+        "health": health,
+        "employment": employment,
+        "economy": economy,
+        "house_condition": house_condition,
+        "dependents": dependents,
+        "social_assistance": social
     }
-
