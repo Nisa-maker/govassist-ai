@@ -108,3 +108,67 @@ def full_system(citizen_id: str):
             "error": "SYSTEM FAILED",
             "detail": str(e)
         }
+    
+@app.get("/citizens/priority")
+def rank_citizens():
+
+    results = []
+
+    for i in range(1, 51):  # ambil 50 warga
+        citizen_id = f"ID{i:03d}"
+
+        try:
+            citizen = get_citizen_data(citizen_id)
+            education = get_education(citizen_id)
+            health = get_health(citizen_id)
+            employment = get_employment(citizen_id)
+            economy = get_economy(citizen_id, employment["income"])
+
+            dependents = random.randint(0, 5)
+            house_condition = random.randint(1, 3)
+
+            model = get_model()
+
+            social = get_social_assistance(
+                income=employment["income"],
+                dependents=dependents,
+                house_condition=house_condition,
+                education_level=education["education_level"],
+                health=health,
+                model=model
+            )
+
+            # =========================
+            # PRIORITY SCORE
+            # =========================
+            score = 0
+
+            if social["eligible"] == 1:
+                score += 3
+
+            if social["health_priority"] == 1:
+                score += 2
+
+            score += (5 - employment["income"])  # makin kecil income makin tinggi score
+            score += dependents
+
+            results.append({
+                "citizen_id": citizen_id,
+                "name": citizen.get("name"),
+                "income": employment["income"],
+                "dependents": dependents,
+                "health_priority": social["health_priority"],
+                "eligible": social["eligible"],
+                "score": score,
+                "reasons": social["reasons"]
+            })
+
+        except:
+            continue
+
+    # =========================
+    # SORT DESC 
+    # =========================
+    results = sorted(results, key=lambda x: x["score"], reverse=True)
+
+    return results[:10]  # top 10
