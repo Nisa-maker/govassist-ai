@@ -1,8 +1,8 @@
-import joblib
+# =========================
+# SOCIAL ASSISTANCE SERVICE
+# =========================
 
-
-
-# mapping education → numeric (biar cocok sama ML)
+# mapping education → numeric (for ML model)
 education_map = {
     "no_school": 0,
     "incomplete_elementary": 1,
@@ -13,16 +13,21 @@ education_map = {
 }
 
 
-def get_social_assistance(income, dependents, house_condition, education_level, health):
+def get_social_assistance(income, dependents, house_condition, education_level, health, model):
     """
     Determine eligibility for social assistance using ML + rules
     """
 
-    # convert education ke angka
+    # =========================
+    # PREPARE INPUT
+    # =========================
     edu = education_map.get(education_level, 2)
 
-    # input ke model
     X = [[income, dependents, house_condition, edu]]
+
+    # =========================
+    # ML PREDICTION
+    # =========================
     pred = model.predict(X)[0]
 
     # =========================
@@ -30,7 +35,7 @@ def get_social_assistance(income, dependents, house_condition, education_level, 
     # =========================
     health_priority = 1 if health["risk_level"] == "high" else 0
 
-    # override kalau sakit berat
+    # override decision if high risk
     if health_priority == 1:
         pred = 1
 

@@ -2,7 +2,7 @@ from services.population import get_population
 from services.education import get_education
 from services.health import get_health
 from services.employment import get_employment
-from economi import get_economi
+from backend.services.economy import get_economi
 from services.social import get_social
 
 def get_citizen_data(citizen_id):

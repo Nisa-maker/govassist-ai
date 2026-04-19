@@ -1,4 +1,7 @@
 from fastapi import FastAPI
+import joblib
+
+model = joblib.load("models/model.pkl")
 import random
 
 # import all services
@@ -6,7 +9,7 @@ from backend.services.citizen import get_citizen_data
 from backend.services.education import get_education
 from backend.services.health import get_health
 from backend.services.employment import get_employment
-from backend.services.ekonomi import get_economy
+from backend.services.economy import get_economy
 from backend.services.social import get_social_assistance
 
 app = FastAPI(title="GovAssist AI - Integrated System")
