@@ -2,7 +2,7 @@ import random
 
 random.seed(42)
 
-# list nama dummy
+# list dummy name
 first_names = ["Anisa", "Budi", "Andi", "Rina", "Dewi", "Agus", "Putri", "Rizky"]
 last_names = ["Santoso", "Wijaya", "Saputra", "Lestari", "Pratama", "Hidayat"]
 
