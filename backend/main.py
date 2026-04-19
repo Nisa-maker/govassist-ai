@@ -188,3 +188,9 @@ def rank_citizens(
     results = [r for r in results if r["score"] >= min_score]
 
     return results[:20]
+
+app = FastAPI()
+
+@app.get("/rank")
+def get_rank(min_score: int = 0):
+    return rank_citizens(min_score)
