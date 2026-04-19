@@ -13,5 +13,5 @@ def get_citizen_data(citizen_id):
         **get_health(citizen_id),
         **get_employment(citizen_id),
         **get_economy(citizen_id),
-        **get_social(citizen_id),
+  
     }
