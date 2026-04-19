@@ -20,13 +20,12 @@ def get_model():
 # =========================
 # IMPORT SERVICES
 # =========================
-from backend.services.citizen import get_citizen_data
-from backend.services.education import get_education
-from backend.services.health import get_health
-from backend.services.employment import get_employment
-from backend.services.economy import get_economy   # pastikan economy.py
-from backend.services.social import get_social_assistance
-
+from services.citizen import get_citizen_data
+from services.education import get_education
+from services.health import get_health
+from services.employment import get_employment
+from services.economy import get_economy
+from services.social import get_social_assistance
 
 # =========================
 # APP INIT
