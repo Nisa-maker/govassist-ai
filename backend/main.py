@@ -5,6 +5,8 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import joblib
 
+
+
 app = FastAPI(title="GovAssist AI")
 
 model = joblib.load("models/model.pkl")
@@ -145,3 +147,4 @@ def predict_manual(data: PredictionInput):
         "score": score,
         "note": "Manual input prediction"
     }
+
