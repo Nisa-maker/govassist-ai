@@ -1,7 +1,6 @@
 import joblib
 
-# load ML model
-model = joblib.load("models/model.pkl")
+
 
 # mapping education → numeric (biar cocok sama ML)
 education_map = {
