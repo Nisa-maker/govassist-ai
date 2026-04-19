@@ -1,6 +1,49 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from fastapi import FastAPI
+from pydantic import BaseModel
+import joblib
+
+app = FastAPI(title="GovAssist AI")
+
+model = joblib.load("models/model.pkl")
+
+education_map = {
+    "no_school": 0,
+    "incomplete_elementary": 1,
+    "elementary_school": 2,
+    "junior_high_school": 3,
+    "senior_high_school": 4,
+    "university": 5
+}
+
+class Citizen(BaseModel):
+    income: float
+    dependents: int
+    house_condition: int
+    education_level: str
+
+
+@app.post("/predict")
+def predict(data: Citizen):
+    edu = education_map.get(data.education_level, 2)
+
+    X = [[
+        data.income,
+        data.dependents,
+        data.house_condition,
+        edu
+    ]]
+
+    prediction = model.predict(X)[0]
+
+    return {
+        "eligible": int(prediction),
+        "education_used": data.education_level
+    }
+
+
 import joblib
 
 model = joblib.load("models/model.pkl")
