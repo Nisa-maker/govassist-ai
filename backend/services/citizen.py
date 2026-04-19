@@ -1,4 +1,4 @@
-from services.population import get_population
+from backend.services.population import get_population
 from services.education import get_education
 from services.health import get_health
 from services.employment import get_employment
