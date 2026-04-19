@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GovAssist AI Dashboard</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #0f172a;
+            color: white;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #38bdf8;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: #1e293b;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #334155;
+        }
+
+        th {
+            background: #020617;
+        }
+
+        tr:hover {
+            background: #334155;
+        }
+
+        .high {
+            color: #f87171;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>🚀 GovAssist AI Dashboard</h1>
+<p>Top Priority Citizens</p>
+
+<table id="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Income</th>
+            <th>Dependents</th>
+            <th>Score</th>
+            <th>Reasons</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+async function loadData() {
+    const res = await fetch("http://127.0.0.1:8000/citizens/priority");
+    const data = await res.json();
+
+    const tbody = document.querySelector("#table tbody");
+    tbody.innerHTML = "";
+
+    data.forEach(c => {
+        const row = `
+            <tr>
+                <td>${c.citizen_id}</td>
+                <td>${c.name}</td>
+                <td>${c.income}</td>
+                <td>${c.dependents}</td>
+                <td class="high">${c.score}</td>
+                <td>${c.reasons.join(", ")}</td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+}
+
+loadData();
+</script>
+
+</body>
+</html>
