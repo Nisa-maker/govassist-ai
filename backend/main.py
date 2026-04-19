@@ -29,7 +29,7 @@ def get_model():
         import os
         import joblib
         BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-        model_path = os.path.join(BASE_DIR, "models", "model.pkl")
+        model_path = os.getenv("MODEL_PATH", "models/model.pkl")
         model = joblib.load(model_path)
     return model
 
