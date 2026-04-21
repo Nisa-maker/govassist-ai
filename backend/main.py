@@ -40,12 +40,12 @@ def get_model():
 # =========================
 # IMPORT SERVICES
 # =========================
-from backend.routers.citizen import get_citizen_data
-from backend.services.education import get_education
-from backend.services.health import get_health
-from backend.services.employment import get_employment
-from backend.services.economy import get_economy
-from backend.services.social import get_social_assistance
+from backend.routers.citizen_router import get_citizen_data
+from backend.services.education_service import get_education
+from backend.services.health_service  import get_health
+from backend.services.employment_service  import get_employment
+from backend.services.economy_service  import get_economy
+from backend.services.social_service  import get_social_assistance
 
 # =========================
 # HOME
