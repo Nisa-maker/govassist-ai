@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 import random
+import os
+import joblib
 
 # =========================
 # APP INIT
@@ -26,11 +28,13 @@ model = None
 def get_model():
     global model
     if model is None:
-        import os
-        import joblib
-        BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-        model_path = os.getenv("MODEL_PATH", "models/model.pkl")
-        model = joblib.load(model_path)
+        try:
+            BASE_DIR = os.path.dirname(__file__)
+            model_path = os.getenv("MODEL_PATH", os.path.join(BASE_DIR, "models", "model.pkl"))
+            model = joblib.load(model_path)
+        except Exception as e:
+            print("Model load failed:", e)
+            model = None
     return model
 
 # =========================
@@ -67,9 +71,9 @@ def full_system(citizen_id: str):
         dependents = random.randint(0, 5)
         house_condition = random.randint(1, 3)
 
-        try:
-            model = get_model()
+        model = get_model()
 
+        try:
             social = get_social_assistance(
                 income=employment["income"],
                 dependents=dependents,
@@ -78,7 +82,6 @@ def full_system(citizen_id: str):
                 health=health,
                 model=model
             )
-
         except Exception as e:
             social = {
                 "error": "ML failed",
@@ -108,6 +111,7 @@ def full_system(citizen_id: str):
 def rank_citizens(min_score=0, city=None):
 
     results = []
+    model = get_model()  # ⬅️ FIX: jangan load berulang di loop
 
     for i in range(1, 101):
         citizen_id = f"ID{i:03d}"
@@ -118,12 +122,8 @@ def rank_citizens(min_score=0, city=None):
             health = get_health(citizen_id)
             employment = get_employment(citizen_id)
 
-            economy = get_economy(citizen_id, employment["income"])
-
             dependents = random.randint(0, 5)
             house_condition = random.randint(1, 3)
-
-            model = get_model()
 
             social = get_social_assistance(
                 income=employment["income"],
@@ -134,8 +134,8 @@ def rank_citizens(min_score=0, city=None):
                 model=model
             )
 
-            # FILTER CITY
-            if city and citizen.get("address") != city:
+            # FILTER CITY (case-insensitive)
+            if city and citizen.get("address", "").lower() != city.lower():
                 continue
 
             # =========================
@@ -149,8 +149,8 @@ def rank_citizens(min_score=0, city=None):
             if social.get("health_priority") == 1:
                 score += 2
 
-            score += (5 - employment["income"])  # makin miskin makin tinggi
-            score += dependents  # makin banyak tanggungan makin tinggi
+            score += (5 - employment["income"])
+            score += dependents
 
             results.append({
                 "citizen_id": citizen_id,
@@ -163,10 +163,10 @@ def rank_citizens(min_score=0, city=None):
                 "reasons": social.get("reasons", [])
             })
 
-        except:
+        except Exception as e:
             continue
 
-    # SORTING
+    # SORT
     results = sorted(results, key=lambda x: x["score"], reverse=True)
 
     # FILTER MIN SCORE
