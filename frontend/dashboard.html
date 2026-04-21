@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GovAssist Dashboard</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            background: #0f172a;
+            color: white;
+        }
+
+        .header {
+            background: #020617;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h2 {
+            margin: 0;
+            color: #38bdf8;
+        }
+
+        .logout {
+            cursor: pointer;
+            color: #f87171;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .filter-box {
+            margin-bottom: 20px;
+        }
+
+        input {
+            padding: 8px;
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 8px 12px;
+            background: #38bdf8;
+            border: none;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #1e293b;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #334155;
+        }
+
+        th {
+            background: #020617;
+        }
+
+        tr:hover {
+            background: #334155;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    <h2>🚀 GovAssist AI</h2>
+    <div class="logout" onclick="logout()">Logout</div>
+</div>
+
+<div class="container">
+
+    <h1>Dashboard Warga Prioritas</h1>
+
+    <div class="filter-box">
+        <input type="number" id="minScore" placeholder="Min Score" />
+        <input type="text" id="city" placeholder="City" />
+        <button onclick="applyFilter()">Filter</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Income</th>
+                <th>Dependents</th>
+                <th>Score</th>
+                <th>Reasons</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+
+</div>
+
+<script>
+const API_URL = "http://127.0.0.1:8000";
+
+// cek login
+if (!localStorage.getItem("user")) {
+    window.location.href = "index.html";
+}
+
+// logout
+function logout() {
+    localStorage.removeItem("user");
+    window.location.href = "index.html";
+}
+
+// load data awal
+async function loadData() {
+    const res = await fetch(`${API_URL}/rank?min_score=10`);
+    const data = await res.json();
+    renderTable(data);
+}
+
+// render table
+function renderTable(data) {
+    const table = document.getElementById("tableBody");
+    table.innerHTML = "";
+
+    data.forEach(c => {
+        table.innerHTML += `
+            <tr>
+                <td>${c.citizen_id}</td>
+                <td>${c.name}</td>
+                <td>${c.income}</td>
+                <td>${c.dependents}</td>
+                <td style="color:#ff6b6b">${c.score}</td>
+                <td>${c.reasons.join(", ")}</td>
+            </tr>
+        `;
+    });
+}
+
+// filter API
+async function applyFilter() {
+    const minScore = document.getElementById("minScore").value || 0;
+    const city = document.getElementById("city").value || "";
+
+    const res = await fetch(`${API_URL}/rank?min_score=${minScore}&city=${city}`);
+    const data = await res.json();
+
+    renderTable(data);
+}
+
+loadData();
+</script>
+
+</body>
+</html>
